@@ -16,7 +16,7 @@
 .DESCRIPTION
     Long description
 .EXAMPLE
-    PS C:\> <example usage>
+    PS C:\> New-Connection -Path "C:\temp\sqlite\sqlite.db"
     Explanation of what the example does
 .INPUTS
     Inputs (if any)
@@ -26,17 +26,6 @@
     General notes
 #>
 
-# $CreateTableQuery = "CREATE TABLE Sales (
-#                         ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-#                         fullname TEXT NOT NULL,
-#                         birth_date TEXT NULL,
-#                         purchase_Id INTEGER NULL)"
-# $SqlCommand = $DbConnection.createcommand()
-# $SqlCommand.commandtext = $CreateTableQuery
-# $SqlCommand.executeNonQuery()
-
-# $SqlCommand.dispose()
-# $DbConnection.Close()
 function New-Connection {
 
     [CmdletBinding()]
@@ -65,7 +54,7 @@ function New-Connection {
 .DESCRIPTION
     Long description
 .EXAMPLE
-    PS C:\> <example usage>
+    PS C:\> New-Table -DbConnection $Connection -Tablename Sales
     Explanation of what the example does
 .INPUTS
     Inputs (if any)
@@ -111,7 +100,6 @@ function New-Table {
     END {
         if ($Close) {
             $DbConnection.Close()
-            $DbConnection.Dispose()
         }
         
     }
@@ -122,7 +110,7 @@ function New-Table {
 .DESCRIPTION
     Long description
 .EXAMPLE
-    PS C:\> <example usage>
+    PS C:\> Close-Connection -DbConnection $Connection
     Explanation of what the example does
 .INPUTS
     Inputs (if any)
@@ -139,12 +127,18 @@ function Close-Connection {
         $DbConnection
     )
     
-    if ($DbConnection.State -eq "Closed") {
-        Write-Warning -Message "There is nothing to close. It looks like the specified databse connection is already close."
+    try {
+        if ($DbConnection.State -eq "Closed") {
+            Write-Warning -Message "There is nothing to close. It looks like the specified databse connection is already close."
+        }
+        else {
+            $DbConnection.Close()
+            $DbConnection.Dispose()
+            Write-host "Connection Closed"
+        }
     }
-    else {
-        $DbConnection.Dispose()
-        $DbConnection.Close()
+    catch {
+        Write-Error -Message $_
     }
 }
 <#
@@ -153,7 +147,7 @@ function Close-Connection {
 .DESCRIPTION
     Long description
 .EXAMPLE
-    PS C:\> <example usage>
+    PS C:\> Add-Data -DbConnection $Connection -TableName Sales -Column @{key1="";key2=""}
     Explanation of what the example does
 .INPUTS
     Inputs (if any)
@@ -196,7 +190,9 @@ function Add-Data {
         }
         $Query = "INSERT INTO $TableName($KeyExtract) VALUES($ValueExtract)"
         $Query = $Query.Replace(",)", ")")
-        $DbConnection.Open()
+        if ($DbConnection.State -eq 'Closed') {
+            $DbConnection.Open()
+        }
     }
     PROCESS {
         $Command = $DbConnection.CreateCommand()
@@ -207,7 +203,6 @@ function Add-Data {
     END {
         if ($Close) {
             $DbConnection.Close()
-            $DbConnection.Dispose()
         }
         
     }
@@ -267,7 +262,10 @@ function Get-Data {
             $Values = $Values.Replace("AND\s$", "")
             $Query = "SELECT * FROM Sales WHERE $Values"
         }
-        $DbConnection.Open()
+        if ($DbConnection.State -eq 'Closed') {
+            $DbConnection.Open()
+        }
+        
     }
     PROCESS {
         $Command = $DBConnection.CreateCommand()
@@ -280,8 +278,48 @@ function Get-Data {
     END {
         if ($Close) {
             $DbConnection.Close()
-            $DbConnection.Dispose()
         }
     }
+    
+}
+
+function Remove-Table {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [System.Data.sqlite.sqliteConnection]
+        $DbConnection,
+        # Specify table name
+        [Parameter(Mandatory = $true)]
+        [string[]]
+        $TableName
+    )
+    BEGIN {
+        $Query = "DROP TABLE $TableName"
+        if ($DbConnection.State -eq 'Closed') {
+            $DbConnection.Open()
+        }
+    }
+    PROCESS {
+        $Command = $DbConnection.CreateCommand()
+        $Command.CommandText = $Query
+        $Result = $Command.ExecuteNonQuery()
+        return $Result
+    }
+    END {
+        if ($Close) {
+            $DbConnection.Close()
+        }
+    }
+    
+}
+
+function Set-Pragma {
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [System.Data.Sqlite.sqliteconnection]
+        $DbConnection
+    )
     
 }
