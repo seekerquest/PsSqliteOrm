@@ -1,20 +1,8 @@
-# Add path to the SQLite DLLs. Uncomment line below and change path to where you installed the System.Data.SQLite.dll file
-# Add-Type -Path "C:\temp\sqlite.net\System.Data.SQLite.dll"
-
-# Path to MySQL DLLs
-# Add-Type -Path "C:\temp\sqlite.net\System.Data.SQLite.dll"
-
-# Path to Postgres .NET DLLs
-# Add-Type -Path "C:\temp\sqlite.net\System.Data.SQLite.dll"
-
-# Path to SQL Server .NET DLLs
-# Add-Type -Path "C:\temp\sqlite.net\System.Data.SQLite.dll"
-
 <#
 .SYNOPSIS
-    Short description
+    Start a new connection to a SQLite database.
 .DESCRIPTION
-    Long description
+    Starts a new connection to a SQLite database by specifying the file path.
 .EXAMPLE
     PS C:\> New-Connection -Path "C:\temp\sqlite\sqlite.db"
     Explanation of what the example does
@@ -50,10 +38,11 @@ function New-Connection {
 
 <#
 .SYNOPSIS
-    Add new table to an empty SQLite datbase
+    Add new table to an existing SQLite datbase
 .DESCRIPTION
-    Long description
+    Add a new table to an exisiting database. Need to specify the database connection using New-Connection cmdlet.
 .EXAMPLE
+    PS C:\> $Connection = New-Connection -Path "c:\temp\sqlite\sqlite.db"
     PS C:\> New-Table -DbConnection $Connection -Tablename Sales
     Explanation of what the example does
 .INPUTS
@@ -106,9 +95,9 @@ function New-Table {
 }
 <#
 .SYNOPSIS
-    Powershell command to close the database connection.
+    Close a SQLite database connection.
 .DESCRIPTION
-    Long description
+    Close a SQLite database connection.
 .EXAMPLE
     PS C:\> Close-Connection -DbConnection $Connection
     Explanation of what the example does
@@ -117,7 +106,8 @@ function New-Table {
 .OUTPUTS
     Output (if any)
 .NOTES
-    General notes
+    This cmdlet doesn't dispose of the database connection, it only closes it. If you need to dispose of the connection, use the
+    "-Dipose $true" paramater.
 #>
 function Close-Connection {
     [CmdletBinding()]
@@ -143,7 +133,7 @@ function Close-Connection {
 }
 <#
 .SYNOPSIS
-    Powershell command to add rows of data to the database table
+    Add rows of data to a SQLite database table.
 .DESCRIPTION
     Long description
 .EXAMPLE
@@ -181,10 +171,10 @@ function Add-Data {
         foreach ($item in $Value.Keys) {
             $KeyExtract += "$item,"
             if ($Value[$item].GetType().Name -eq "String" ) {
-                $ValueExtract += "'$Value[$item]',"
+                $ValueExtract += "'$($Value[$item])',"
             }
             else {
-                $ValueExtract += "$Value[$item],"
+                $ValueExtract += "$($Value[$item]),"
             }
             
         }
@@ -209,7 +199,7 @@ function Add-Data {
 }
 <#
 .SYNOPSIS
-    Powershell comdlet to query data from the database
+    Query data from a SQLite database table. 
 .DESCRIPTION
     Long description
 .EXAMPLE
@@ -282,7 +272,22 @@ function Get-Data {
     }
     
 }
-
+<#
+.SYNOPSIS
+    Remove a table from SQLite database. ****BE CAREFUL this command is irreverisable****.
+.DESCRIPTION
+    Delete table from SQLite database. This will delete the table including the data inside tables. 
+    !!!Practice caution when using this cmdlet, always backup your database before testing against a database file.!!!
+.EXAMPLE
+    PS C:\> <example usage>
+    Explanation of what the example does
+.INPUTS
+    Inputs (if any)
+.OUTPUTS
+    Output (if any)
+.NOTES
+    General notes
+#>
 function Remove-Table {
     [CmdletBinding()]
     param (
@@ -314,12 +319,111 @@ function Remove-Table {
     
 }
 
+<#
+.SYNOPSIS
+    Read Pragma values of a SQLite database.
+.DESCRIPTION
+    This cmdlet returns the pragma value specified by "-Pargma" parameter. 
+    For a list of Pragmas you can inspect visit: https://sqlite.org/pragma.html
+.EXAMPLE
+    PS C:\> Get-Pragma -Pragma busy_timeout
+    Explanation of what the example does
+.INPUTS
+    Inputs (if any)
+.OUTPUTS
+    Output (if any)
+.NOTES
+    General notes
+#>
+function Get-Pragma {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true)]
+        [System.Data.SQlite.Sqliteconnection]
+        $DbConnection,
+        # Specify pragma name
+        [Parameter(Mandatory=$true)]
+        [string]
+        $Pragma,
+        # Specify if conection should be closed
+        [Parameter()]
+        [bool]
+        $Close
+    )
+
+    BEGIN{
+        $Query = "PRAGMA $Pragma;"
+        if ($DbConnection.State -eq "Closed") {
+            $DbConnection.Open()
+        }
+    }
+    PROCESS{
+        $Command = $DbConnection.CreateCommand()
+        $Command.CommandText = $Query
+        $Adapter = New-Object -TypeName System.Data.SQLite.SQLiteDataAdapter $Command
+        $PragmaSet = New-Object -TypeName System.Data.DataSet
+        [void]$Adapter.Fill($PragmaSet)
+        return $PragmaSet.Tables.rows
+    }
+    END{
+        if ($Close) {
+            $DbConnection.Close()
+        }
+    }
+    
+}
+
+<#
+.SYNOPSIS
+    Set Pragma value in a SQLite database.
+.DESCRIPTION
+    
+.EXAMPLE
+    PS C:\> Set-Pragma -Pragma busy_timeout -Value 23
+    Explanation of what the example does
+.INPUTS
+    Inputs (if any)
+.OUTPUTS
+    Output (if any)
+.NOTES
+    General notes
+#>
 function Set-Pragma {
     [CmdletBinding()]
     param (
         [Parameter()]
         [System.Data.Sqlite.sqliteconnection]
-        $DbConnection
+        $DbConnection,
+        # Specify pragma name
+        [Parameter(Mandatory=$true)]
+        [string]
+        $Pragma,
+        # Specify Pragma value
+        [Parameter(Mandatory=$true)]
+        [string]
+        $Value,
+        # Specify if conection should be closed
+        [Parameter()]
+        [bool]
+        $Close
     )
+
+    BEGIN{
+        $Query = "PRAGMA $Pragma=$Value;"
+        if ($DbConnection.State -eq "Closed") {
+            $DbConnection.Open()
+        }
+    }
+    PROCESS{
+        $Command = $DbConnection.CreateCommand()
+        $Command.CommandText = $Query
+        $PargmaResult = $Command.ExecuteNonQuery()
+        Return $PargmaResult
+    }
+    END{
+        if ($Close) {
+            $DbConnection.Close()
+        }
+    }
     
 }
