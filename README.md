@@ -36,7 +36,7 @@ $Connection = New-Connection -Path "c:\temp\sqlite\users.db"
 
 # Change Log
 
-[See CHANGELOG file](https://github.com/eldjoko/PsSqliteOrm/blob/master/LICENSE)
+[See CHANGELOG file](https://github.com/eldjoko/PsSqliteOrm/blob/master/CHANGELOG.md)
 # License
 
-[See LICENSE file](https://github.com/eldjoko/PsSqliteOrm/blob/master/CHANGELOG.md)
+[See LICENSE file](https://github.com/eldjoko/PsSqliteOrm/blob/master/LICENSE)
