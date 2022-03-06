@@ -272,6 +272,73 @@ function Get-Data {
     }
     
 }
+
+<#
+.SYNOPSIS
+    Deletes a data record from SQLite database table.
+.DESCRIPTION
+    Long description
+.EXAMPLE
+    PS C:\> <example usage>
+    Explanation of what the example does
+.INPUTS
+    Inputs (if any)
+.OUTPUTS
+    Output (if any)
+.NOTES
+    General notes
+#>
+function Delete-Data {
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [system.data.sqlite.sqliteconnection]
+        $DbConnection
+    )
+    BEGIN{
+
+
+    }
+    PROCESS{
+
+    }
+    END{
+
+    }
+}
+<#
+.SYNOPSIS
+    Updates a data record in a SQLite database table.
+.DESCRIPTION
+    Long description
+.EXAMPLE
+    PS C:\> <example usage>
+    Explanation of what the example does
+.INPUTS
+    Inputs (if any)
+.OUTPUTS
+    Output (if any)
+.NOTES
+    General notes
+#>
+function Update-Data {
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [system.data.sqlite.sqliteconnection]
+        $DbConnection
+    )
+    BEGIN{
+
+    }
+    PROCESS{
+
+    }
+    END{
+
+    }
+    
+}
 <#
 .SYNOPSIS
     Remove a table from SQLite database. ****BE CAREFUL this command is irreverisable****.

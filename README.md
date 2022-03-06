@@ -30,7 +30,59 @@ Start a new connection to a database file by specifying the path of your DB.
 $Connection = New-Connection -Path "c:\temp\sqlite\users.db"
 ```
 
-## Perform CRUD Operations
+## Perform data CRUD Operations
+
+### CREATE Operation
+
+```powershell
+$connection = New-Connection -Path "c:\temp\sqlite\sqlite.db"
+Add-Data -DbConnection $Connection -TableName Users -Value @{ID=1;firstname="Jane";lastname="Doe";age=12;dateCreated="$(get-date)";username='jdoe'}
+```
+
+### READ Operation
+
+```powershell
+Get-Data -DbConnection $Connection -TableName Users -All $true
+```
+
+### UDPATE Operation
+
+```powershell
+
+
+```
+
+### DELETE Operation
+
+```powershell
+
+```
+
+## Perform table CRUD Operation
+
+### CREATE Operation
+
+```powershell
+
+```
+
+### READ Operation
+
+```powershell
+
+```
+
+### UPDATE Operation
+
+```powershell
+
+```
+
+### DELETE Operation
+
+```powershell
+
+```
 
 # Version Control
 
